@@ -1,0 +1,74 @@
+//
+//  HomeView.swift
+//  flourish-playground
+//
+//  Created by aliana yee on 8/4/25.
+//
+
+
+import SwiftUI
+
+enum TabItem: Int {
+    case recordImpact
+    case garden
+    case journal
+}
+
+struct HomeView: View {
+    @StateObject var gardenVM = ThemedGardenViewModel()
+    @StateObject var journalVM = JournalViewModel()
+
+    @State private var selectedTab: TabItem = .recordImpact
+
+    var body: some View {
+        VStack() {
+            // Content area
+            ZStack {
+                switch selectedTab {
+                case .recordImpact:
+                    RecordView(gardenVM: gardenVM, journalVM: journalVM)
+                case .garden:
+                    ThemedGardenView(viewModel: gardenVM)
+                        .environmentObject(gardenVM)
+                case .journal:
+                    JournalView(journalVM: journalVM)
+                }
+            }
+
+            // Custom tab bar
+            HStack(spacing: 40) {
+                tabBarButton(icon: "house.fill", tab: .recordImpact)
+                tabBarButton(icon: "camera.macro", tab: .garden)
+                tabBarButton(icon: "book.fill", tab: .journal)
+            }
+            //.padding(.vertical, 10)
+            .frame(width: 340, height: 80)
+            .cornerRadius(30)
+            .background( Color(red: 255/255, green: 194/255, blue: 248/255) )
+            .frame(width: 340, height: 70)
+            .cornerRadius(30)
+            //.padding(.vertical, 5)
+            //.frame(width: 340, height: 90)
+            //.position(CGPoint(x:0,y:0))
+            //.padding(5)
+        }
+    }
+
+    // MARK: Tab Button
+    private func tabBarButton(icon: String, tab: TabItem) -> some View {
+        Button {
+            selectedTab = tab
+        } label: {
+            Image(systemName: icon)
+                .font(Font.custom("Poppins-Regular", size: 24))
+                .frame(width: 50, height: 50)
+                .background(
+                    Circle()
+                        .fill(selectedTab == tab
+                              ? Color(red: 203/255, green: 255/255, blue: 163/255) // pastel green selected
+                              : Color.clear)
+                )
+                .foregroundColor(.black)
+        }
+    }
+}
