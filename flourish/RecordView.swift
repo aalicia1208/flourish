@@ -15,10 +15,12 @@ struct JournalEntry: Identifiable {
     var image: UIImage?
     var points: Int
     var date: Date
+    var category: String
 }
 
 class JournalViewModel: ObservableObject {
     @Published var entries: [JournalEntry] = []
+    @Published var categoryCounts: [Int] = [0,0,0,0,0]
 }
 
 struct RecordView: View {
@@ -97,31 +99,50 @@ struct RecordView: View {
                 }
             }
         ))
-        .alert("Points Awarded!", isPresented: $showPointsAwarded) {
-            Button("OK", role: .cancel) {}
+        .alert("points awarded!", isPresented: $showPointsAwarded) {
+            Button("ok", role: .cancel) {}
         } message: {
-            Text("You earned \(awardedPoints) points for your action!")
+            Text("you earned \(awardedPoints) points for your action!")
         }
         
     }
 
     private func submitEntry() {
         isSubmitting = true
+        
+        var category = ""
+        
+        GPTPointEvaluator.categorize(title: titleText, entry: entryText) { c in
+            print("!!!!!!! \(c)")
+            category = c
+            if category == "recycling" { journalVM.categoryCounts[0] += 1 }
+            if category == "gardening" { journalVM.categoryCounts[1] += 1 }
+            if category == "reusing/repurposing" { journalVM.categoryCounts[2] += 1 }
+            if category == "reducing waste" { journalVM.categoryCounts[3] += 1 }
+            if category == "other" { journalVM.categoryCounts[4] += 1 }
+        }
+        
+        print("****** \(category)")
+        
         GPTPointEvaluator.evaluate(title: titleText, entry: entryText) { points in
             awardedPoints = points
             gardenVM.balance += points
+            gardenVM.runningBal += points
             journalVM.entries.append(JournalEntry(
                 title: titleText,
                 entry: entryText,
                 image: selectedImage,
                 points: points,
-                date: Date.now
+                date: Date.now,
+                category: category
+                
             ))
             isSubmitting = false
             showPointsAwarded = true
             titleText = ""
             entryText = ""
             selectedImage = nil
+            category = ""
         }
     }
     
@@ -241,6 +262,54 @@ class GPTPointEvaluator {
 
             DispatchQueue.main.async {
                 completion(number)
+            }
+        }.resume()
+    }
+    
+    static func categorize(title: String, entry: String, completion: @escaping (String) -> Void) {
+        let prompt = "please categorize this entry into one category of environmentally friendly actions (categories are: recycling, reusing/repurposing, reducing waste, gardening, or other). only return the category name in all lowercase letters exactly as given above. here is the entry: \(title): \(entry)"
+
+        let requestData = [
+            "model": "gpt-4",
+            "messages": [
+                ["role": "system", "content": prompt]
+            ]
+        ] as [String : Any]
+       
+        guard let apiKey = Bundle.main.object(forInfoDictionaryKey: "API_KEY") as? String else {
+            print("Missing API Key in Info.plist !!!!")
+            return
+        }
+       
+        guard let url = URL(string: "https://api.openai.com/v1/chat/completions") else {
+            print("Invalid URL or missing API key")
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: requestData)
+        } catch {
+            print("Failed to encode JSON")
+            return
+        }
+
+        URLSession.shared.dataTask(with: request) { data, _, error in
+            guard let data = data, error == nil,
+                  let response = try? JSONDecoder().decode(GPTResponse.self, from: data),
+                  let content = response.choices.first?.message.content
+            else {
+                print("Failed to parse response: \(error!)")
+                return
+            }
+
+            DispatchQueue.main.async {
+                let str = String(content.trimmingCharacters(in: .whitespacesAndNewlines))
+                completion(str)
             }
         }.resume()
     }

@@ -131,10 +131,11 @@ struct GardenPlot: Identifiable {
 class ThemedGardenViewModel: ObservableObject {
     @Published var currentThemeIndex: Int = 0
     @Published var plots: [GardenPlot] = Array(repeating: GardenPlot(flower: nil), count: 12)
-    @Published var balance: Int = 1000
+    @Published var balance: Int = 20
     @Published var selectedFlower: (any Flower)? = nil
     @Published var showSelectPlot = false
     @Published var showGardenComplete = false
+    @Published var runningBal: Int = 20
 
     var currentTheme: GardenTheme {
         GardenTheme.allCases[currentThemeIndex]

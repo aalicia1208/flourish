@@ -12,6 +12,7 @@ enum TabItem: Int {
     case recordImpact
     case garden
     case journal
+    case analytics
 }
 
 struct HomeView: View {
@@ -22,7 +23,6 @@ struct HomeView: View {
 
     var body: some View {
         VStack() {
-            // Content area
             ZStack {
                 switch selectedTab {
                 case .recordImpact:
@@ -32,14 +32,17 @@ struct HomeView: View {
                         .environmentObject(gardenVM)
                 case .journal:
                     JournalView(journalVM: journalVM)
+                case .analytics:
+                    AnalyticsView(journalVM: journalVM, gardenVM: gardenVM)
                 }
             }
 
             // Custom tab bar
-            HStack(spacing: 40) {
+            HStack(spacing: 30) {
                 tabBarButton(icon: "house.fill", tab: .recordImpact)
                 tabBarButton(icon: "camera.macro", tab: .garden)
                 tabBarButton(icon: "book.fill", tab: .journal)
+                tabBarButton(icon: "chart.bar.xaxis.ascending", tab: .analytics)
             }
             //.padding(.vertical, 10)
             .frame(width: 340, height: 80)
