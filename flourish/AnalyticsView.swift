@@ -36,9 +36,10 @@ struct AnalyticsView: View {
                 }
             }
         }
-        
         return streak
     }
+    
+    @State private var lastMilestoneDay: Date? = nil
     
     var categoryCounts: [CategoryData] {
         let dict = [ CategoryData(category: "recycling", count: journalVM.categoryCounts[0]),
@@ -57,6 +58,9 @@ struct AnalyticsView: View {
     @State private var newUsername = ""
     @State private var currentUserID: String? = nil
     
+    @State private var showingMilestoneAlert = false
+    @State private var showingStreakExplaination = false
+    
     @StateObject var viewModel = LeaderboardViewModel()
         
     var body: some View {
@@ -67,10 +71,20 @@ struct AnalyticsView: View {
                 .frame(width: 340, alignment: .leading)
                 .padding(.top)
             
-                // MARK: - Streak Bar
+                // MARK: - streak
             VStack(alignment: .leading, spacing: 10) {
-                Text("current streak")
-                    .font(Font.custom("Poppins-SemiBold", size: 20))
+                HStack(alignment: .lastTextBaseline) {
+                    Text("current streak")
+                        .font(Font.custom("Poppins-SemiBold", size: 20))
+                    
+                    Button("how it works") { showingStreakExplaination = true }
+                        .font(.poppins())
+                        .alert("what is the streak?", isPresented: $showingStreakExplaination) {
+                            Button("got it!") {}
+                        } message: {
+                            Text("the streak counts how many days in a row you've journaled, but it'll reset to zero if you miss a day. keep up the streak, and every 7 days the bar will fill up and you'll get bonus points as a reward!")
+                        }
+                }
                 
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 12)
@@ -79,12 +93,28 @@ struct AnalyticsView: View {
                     
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color(red: 203/255, green: 255/255, blue: 163/255))
-                        .frame(width: CGFloat(min(streakCount, 30)) / 30 * 300, height: 20)
+                        .frame(width: CGFloat((streakCount >= 7 ? ( streakCount%7==0 ? 7 : (streakCount % 7 + 1) ) : streakCount)) * (streakCount > 7 ? (10*30/8) : (10*30/7)), height: 20)
                 }
                 
                 Text("\(streakCount) days in a row!")
                     .font(.poppins())
                     .foregroundColor(.secondary)
+                    .alert("streak milestone reached!", isPresented: $showingMilestoneAlert) {
+                        Button("continue") {
+                            gardenVM.balance += 30
+                            gardenVM.runningBal += 30
+                        }
+                    } message: {
+                        Text("wow, you reached streak of \(streakCount)! here's 40 points as a reward. keep it up!")
+                    }
+                    .onAppear {
+                        if streakCount % 7 == 0 && streakCount > 0 {
+                            if lastMilestoneDay == nil || lastMilestoneDay! != Date.now {
+                                showingMilestoneAlert = true
+                                lastMilestoneDay = Date.now
+                            }
+                        }
+                    }
             }
             .padding()
             .frame(width: 340, alignment: .leading)
