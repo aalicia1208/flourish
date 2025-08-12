@@ -53,6 +53,10 @@ struct AnalyticsView: View {
     @State private var currentPoints: Int = 0
     @State private var userName: String = ""
     
+    @State private var showingUsernameAlert = false
+    @State private var newUsername = ""
+    @State private var currentUserID: String? = nil
+    
     @StateObject var viewModel = LeaderboardViewModel()
         
     var body: some View {
@@ -125,17 +129,37 @@ struct AnalyticsView: View {
             .cornerRadius(30)
             
             
-            VStack(alignment:.leading) {
-                
-                Text("leaderboard")
-                    .font(Font.custom("Poppins-SemiBold", size: 20))
-                    .onAppear {
-                        Task { currentPoints = try await pointsUpdater.addPoints(amount: gardenVM.runningBal, displayName: userName.isEmpty ? nil : userName) }
+            VStack(alignment: .leading) {
+                HStack(alignment: .lastTextBaseline) {
+                    Text("leaderboard")
+                        .font(Font.custom("Poppins-SemiBold", size: 20))
+                        .onAppear {
+                            Task { currentPoints = try await pointsUpdater.addPoints(amount: gardenVM.runningBal, displayName: userName.isEmpty ? nil : userName) }
+                        }
+                        .padding(.trailing, 6)
+                    
+                    Button("change username") {
+                        showingUsernameAlert = true
                     }
+                    .font(.poppins())
+                    .alert("change your username!", isPresented: $showingUsernameAlert) {
+                        TextField("new username", text: $newUsername)
+                        Button("save") {
+                            Task {
+                                do {
+                                    try await pointsUpdater.updateDisplayName(newName: newUsername)
+                                } catch {
+                                    print("error updating username: \(error)")
+                                }
+                            }
+                        }
+                        Button("cancel", role: .cancel) { }
+                    }
+                }
                 
                 List(viewModel.entries) { entry in
                     HStack {
-                        Text(entry.displayName ?? "anonymous flower")
+                        Text((entry.displayName ?? "anonymous flower") + (entry.id == currentUserID ? " (me)" : ""))
                             .font(.headline)
                         Spacer()
                         Text("\(entry.points) points")
@@ -145,6 +169,7 @@ struct AnalyticsView: View {
                 }
                 .navigationTitle("leaderboard")
                 .onAppear {
+                    currentUserID = Auth.auth().currentUser?.uid
                     viewModel.startListeningForLeaderboard()
                 }
             }
@@ -201,7 +226,7 @@ class PointsUpdater: ObservableObject {
                 if let name = displayName, !name.isEmpty {
                     dataToUpdate["displayName"] = name
                 } else if userDocument!.exists && userDocument!.data()?["displayName"] == nil {
-                     dataToUpdate["displayName"] = "flower \(uid.prefix(4))"
+                    dataToUpdate["displayName"] = "flower \(uid.prefix(4))"
                 }
 
                 transaction.setData(dataToUpdate, forDocument: userRef, merge: true)
@@ -211,6 +236,28 @@ class PointsUpdater: ObservableObject {
             return newPoints
         } catch {
             print("Error updating points: \(error.localizedDescription)")
+            throw error
+        }
+    }
+    
+    func updateDisplayName(newName: String) async throws {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            throw PointsError.notAuthenticated
+        }
+        
+        guard !newName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            print("username cannot be empty!")
+            return
+        }
+        
+        let db = Firestore.firestore()
+        let userRef = db.collection("leaderboard").document(uid)
+        
+        do {
+            try await userRef.setData(["displayName": newName], merge: true)
+            print("Successfully updated display name for \(uid) to \(newName)")
+        } catch {
+            print("Error updating display name: \(error.localizedDescription)")
             throw error
         }
     }
