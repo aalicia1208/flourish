@@ -14,14 +14,11 @@ struct JournalView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                
-                // Title aligned with cards
                 Text("journal")
                     .font(.poppinsBold())
                     .frame(width: 340, alignment: .leading)
                     .padding(.top)
                 
-                // No entries message
                 if journalVM.entries.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("no entries yet!")
@@ -35,7 +32,6 @@ struct JournalView: View {
                     .cornerRadius(30)
                 }
                 
-                // Entries
                 ForEach(journalVM.entries.reversed()) { entry in
                     VStack(alignment: .leading, spacing: 8) {
                         Text(entry.title)
@@ -67,7 +63,7 @@ struct JournalView: View {
                     .cornerRadius(30)
                 }
             }
-            .frame(maxWidth: .infinity) // Centers everything in ScrollView
+            .frame(maxWidth: .infinity)
             .padding(.bottom)
         }
     }

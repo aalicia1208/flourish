@@ -37,27 +37,20 @@ struct HomeView: View {
                 }
             }
 
-            // Custom tab bar
             HStack(spacing: 30) {
                 tabBarButton(icon: "house.fill", tab: .recordImpact)
                 tabBarButton(icon: "camera.macro", tab: .garden)
                 tabBarButton(icon: "book.fill", tab: .journal)
                 tabBarButton(icon: "chart.bar.xaxis.ascending", tab: .analytics)
             }
-            //.padding(.vertical, 10)
             .frame(width: 340, height: 80)
             .cornerRadius(30)
             .background( Color(red: 255/255, green: 194/255, blue: 248/255) )
             .frame(width: 340, height: 70)
             .cornerRadius(30)
-            //.padding(.vertical, 5)
-            //.frame(width: 340, height: 90)
-            //.position(CGPoint(x:0,y:0))
-            //.padding(5)
         }
     }
 
-    // MARK: Tab Button
     private func tabBarButton(icon: String, tab: TabItem) -> some View {
         Button {
             selectedTab = tab

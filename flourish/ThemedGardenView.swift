@@ -52,7 +52,6 @@ enum GardenTheme: CaseIterable {
     }
 }
 
-// Enum for flower types (theme-based)
 enum GardenFlowerType: String, CaseIterable, Identifiable {
     case sunflower, rose, lavender, mushroom
     var id: String { rawValue }
@@ -122,7 +121,6 @@ enum DesertFlowerType: String, CaseIterable, Identifiable {
     }
 }
 
-// Represents one plot in the garden
 struct GardenPlot: Identifiable {
     let id = UUID()
     var flower: (any Flower)?
@@ -254,7 +252,6 @@ struct ThemedGardenView: View {
                     }
                 }
             }
-            //Spacer()
         }
         .alert("\(viewModel.currentTheme.name) complete!", isPresented: $viewModel.showGardenComplete) {
             Button("share your garden!") { exportGardenImage() }
@@ -270,14 +267,14 @@ struct ThemedGardenView: View {
         return ZStack {
             RoundedRectangle(cornerRadius: 30)
                 .fill(lightYellow)
-                .frame(width: 340, height: 480) // 480
+                .frame(width: 340, height: 480)
             
             LazyVGrid(columns: columns, spacing: 5) {
                 ForEach(viewModel.plots.indices, id: \.self) { index in
                     ZStack {
                         RoundedRectangle(cornerRadius: 30)
                             .fill(viewModel.plotColor)
-                            .frame(width: 95, height: 105) // 105
+                            .frame(width: 95, height: 105)
                         if let flower = viewModel.plots[index].flower {
                             Image(flower.iconName)
                                 .resizable()
@@ -294,7 +291,6 @@ struct ThemedGardenView: View {
                     }
                 }
             }
-            //.padding()
         }
     }
     
@@ -303,7 +299,6 @@ struct ThemedGardenView: View {
         renderer.scale = UIScreen.main.scale // ensure correct resolution
         
         if let uiImage = renderer.uiImage {
-            // Save or share
             saveAndShare(image: uiImage)
         }
     }
@@ -317,7 +312,6 @@ struct ThemedGardenView: View {
         
         let activityVC = UIActivityViewController(activityItems: [temporaryURL], applicationActivities: nil)
         
-        // Presenting in SwiftUI
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let rootVC = windowScene.windows.first?.rootViewController {
             rootVC.present(activityVC, animated: true, completion: nil)

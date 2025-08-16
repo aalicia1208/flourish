@@ -71,7 +71,7 @@ struct AnalyticsView: View {
                 .frame(width: 340, alignment: .leading)
                 .padding(.top)
             
-                // MARK: - streak
+            //streak
             VStack(alignment: .leading, spacing: 10) {
                 HStack(alignment: .lastTextBaseline) {
                     Text("current streak")
@@ -122,7 +122,7 @@ struct AnalyticsView: View {
             .cornerRadius(30)
             
             
-            // MARK: - Pie Chart
+            // category dist
             VStack(alignment: .leading, spacing: 10) {
                 Text("category distribution")
                     .font(Font.custom("Poppins-SemiBold", size: 20))
@@ -158,7 +158,7 @@ struct AnalyticsView: View {
             .background(Color(red: 255/255, green: 254/255, blue: 226/255))
             .cornerRadius(30)
             
-            
+            // leaderboard
             VStack(alignment: .leading) {
                 HStack(alignment: .lastTextBaseline) {
                     Text("leaderboard")
@@ -225,8 +225,6 @@ struct LeaderboardEntry: Identifiable, Codable {
 }
 
 class PointsUpdater: ObservableObject {
-
-    // Function to add points to the current anonymous user
     func addPoints(amount: Int, displayName: String?) async throws -> Int {
         guard let uid = Auth.auth().currentUser?.uid else {
             throw PointsError.notAuthenticated
